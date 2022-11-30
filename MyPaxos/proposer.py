@@ -3,21 +3,19 @@ import socket
 import struct
 import pickle
 import sys
-import math
 
 from message import message
 
 NUM_ACCEPTORS = 3.0
 class Proposer(Thread):
     
-    def __init__(self, addr, id, config, role):
+    def __init__(self, addr, id, config):
         Thread.__init__(self)
         self.instances = {}
         self.instance_index = -1
         self.addr = addr
         self.id = id
         self.config = config
-        self.role = role
         self.sender = self.send_config()
         self.receiver = self.receive_config()
     
@@ -41,15 +39,30 @@ class Proposer(Thread):
 
     def create_message(self, msg):
         newmsg = message()
-        if msg.phase == "CLIENT":
+        if msg.phase == "CLIENT-REQUEST":
             newmsg.instance_index = self.instance_index 
             newmsg.phase = "PHASE1A"
             newmsg.c_rnd = 1
             newmsg.client_val = msg.client_val
+
+        elif msg.phase == "PHASE1B":
+            newmsg.instance_index = msg.instance_index 
+            newmsg.phase = "PHASE2A"
+            newmsg.c_rnd = self.instances[msg.instance_index]["c_rnd"]
+            newmsg.c_val = self.instances[msg.instance_index]["c_val"]
+
+        elif msg.phase == "PHASE2B":
+            newmsg.instance_index = msg.instance_index 
+            newmsg.phase = "DECISION"
+            newmsg.v_val = msg.v_val
+    
         return newmsg
     
     def print_message(self, msg):
         print(msg)
+    
+    def print_instance(self, id):
+        print(self.instances[id])
 
 
     def run(self):
@@ -61,7 +74,7 @@ class Proposer(Thread):
             msg = pickle.loads(msg)
 
 
-            if msg.phase == "CLIENT": 
+            if msg.phase == "CLIENT-REQUEST": 
 
                 self.create_instance(msg)            
                 newmsg = self.create_message(msg)
@@ -78,11 +91,28 @@ class Proposer(Thread):
                 if msg.rnd == self.instances[msg.instance_index]["c_rnd"]:
                     self.instances[msg.instance_index]["votes1"]+=1
 
-                if self.instances[msg.instance_index]["votes1"] > math.ceil(NUM_ACCEPTORS/2):
+                if self.instances[msg.instance_index]["votes1"] > int(NUM_ACCEPTORS/2):
+                    self.instances[msg.instance_index]["votes1"] = int(int(NUM_ACCEPTORS/2) - NUM_ACCEPTORS + 1)
                     if self.instances[msg.instance_index]["k"]==0:
                         self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["client_val"]
                     else:
                         self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["k_val"]
+                    newmsg = self.create_message(msg)
+                    newmsg = pickle.dumps(newmsg)
+                    self.sender.sendto(newmsg, self.config['acceptors'])
+
+            elif msg.phase == "PHASE2B":
+                if msg.v_rnd == self.instances[msg.instance_index]["c_rnd"]:
+                    self.instances[msg.instance_index]["votes2"]+=1
+
+
+                if self.instances[msg.instance_index]["votes2"] > int(NUM_ACCEPTORS/2):
+                    self.instances[msg.instance_index]["votes2"] = int(int(NUM_ACCEPTORS/2) - NUM_ACCEPTORS + 1)
+                    newmsg = self.create_message(msg)
+                    newmsg = pickle.dumps(newmsg)
+                    self.sender.sendto(newmsg, self.config['learners'])
+
+                    
 
                 
 

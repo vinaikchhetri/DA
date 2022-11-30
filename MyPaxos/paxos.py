@@ -5,6 +5,7 @@ import struct
 from client import Client
 from proposer import Proposer
 from acceptor import Acceptor
+from learner import Learner
 
 def mcast_receiver(hostport):
     """create a multicast socket listening to the address"""
@@ -46,7 +47,7 @@ def acceptor(config, id):
     #     if id == 1:
     #         # print "acceptor: sending %s to learners" % (msg)
     #         s.sendto(msg, config['learners'])
-    a = Acceptor(config['acceptors'], id, config, "acceptor")
+    a = Acceptor(config['acceptors'], id, config)
     a.start()
 
 
@@ -60,17 +61,19 @@ def proposer(config, id):
     #     if id == 1:
     #         # print "proposer: sending %s to acceptors" % (msg)
     #         s.sendto(msg, config['acceptors'])
-    p = Proposer(config['proposers'], id, config, "proposer")
+    p = Proposer(config['proposers'], id, config)
     p.start()
 
 
 
 def learner(config, id):
-    r = mcast_receiver(config['learners'])
-    while True:
-        msg = r.recv(2**16)
-        print(msg)
-        sys.stdout.flush()
+    # r = mcast_receiver(config['learners'])
+    # while True:
+    #     msg = r.recv(2**16)
+    #     print(msg)
+    #     sys.stdout.flush()
+    l = Learner(config['learners'], id, config)
+    l.start()
 
 
 def client(config, id):
@@ -81,7 +84,7 @@ def client(config, id):
     #     print ("client: sending %s to proposers" % (value))
     #     s.sendto(value.encode(), config['proposers'])
     # print ('client done.')
-    c = Client(config['proposers'], id, config, "proposer")
+    c = Client(config['clients'], id, config)
     c.start()
 
 
