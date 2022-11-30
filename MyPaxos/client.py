@@ -28,7 +28,7 @@ class Client(Thread):
             for value in sys.stdin:
                 value = value.strip()
                 msg = message()
-                msg.phase = "Client propose"
+                msg.phase = "CLIENT"
                 msg.client_val = value
                 msg = pickle.dumps(msg)
                 print ("client: sending %s to proposers" % (value))

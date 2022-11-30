@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 @dataclass
 class message:
+    instance_index: int = -1
     phase: str = None
     c_rnd: int = 0
     c_val: int = None
