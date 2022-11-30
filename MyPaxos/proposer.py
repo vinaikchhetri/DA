@@ -47,10 +47,13 @@ class Proposer(Thread):
             newmsg.c_rnd = 1
             newmsg.client_val = msg.client_val
         return newmsg
+    
+    def print_message(self, msg):
+        print(msg)
 
 
     def run(self):
-        #global NUM_ACCEPTORS
+        global NUM_ACCEPTORS
 
         print ('-> proposer', self.id)
         while True:
@@ -59,8 +62,10 @@ class Proposer(Thread):
 
 
             if msg.phase == "CLIENT": 
+
                 self.create_instance(msg)            
                 newmsg = self.create_message(msg)
+                self.instances[self.instance_index]["c_rnd"] = 1
                 newmsg = pickle.dumps(newmsg)
                 self.sender.sendto(newmsg, self.config['acceptors'])
             
@@ -78,9 +83,6 @@ class Proposer(Thread):
                         self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["client_val"]
                     else:
                         self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["k_val"]
-
-                print(self.instances[msg.instance_index]["votes1"])
-                print(self.instances[msg.instance_index]["c_val"])
 
                 
 

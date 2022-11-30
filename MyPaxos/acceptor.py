@@ -48,6 +48,9 @@ class Acceptor(Thread):
             newmsg.v_val = self.instances[msg.instance_index]["v_val"]
         return newmsg
 
+    def print_message(self, msg):
+        print(msg)
+
     def run(self):
         print ('-> acceptor', self.id)
         while True:
