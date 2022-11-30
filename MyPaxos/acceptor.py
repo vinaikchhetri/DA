@@ -37,12 +37,20 @@ class Acceptor(Thread):
 
     def create_message(self, msg):
         newmsg = message()
+        newmsg.pid = msg.pid
+
         if msg.phase == "PHASE1A":
             newmsg.instance_index = msg.instance_index 
             newmsg.phase = "PHASE1B"
             newmsg.rnd = self.instances[msg.instance_index]["rnd"]
             newmsg.v_rnd = self.instances[msg.instance_index]["v_rnd"]
             newmsg.v_val = self.instances[msg.instance_index]["v_val"]
+
+        elif msg.phase == "PHASE1A-REJECTED":
+            newmsg.instance_index = msg.instance_index 
+            newmsg.phase = "PHASE1A-REDO"
+            newmsg.c_rnd = msg.c_rnd
+            newmsg.client_val = msg.client_val            
 
         elif msg.phase == "PHASE2A":
             newmsg.instance_index = msg.instance_index 
@@ -65,15 +73,18 @@ class Acceptor(Thread):
             self.create_instance(msg)
 
             if msg.phase == "PHASE1A":
-
                 if msg.c_rnd > self.instances[msg.instance_index]["rnd"]:
                     self.instances[msg.instance_index]["rnd"] = msg.c_rnd 
                     newmsg = self.create_message(msg)
                     newmsg = pickle.dumps(newmsg)
                     self.sender.sendto(newmsg, self.config['proposers'])
+                else:
+                    msg.phase = "PHASE1A-REJECTED"
+                    newmsg = self.create_message(msg)
+                    newmsg = pickle.dumps(newmsg)
+                    self.sender.sendto(newmsg, self.config['proposers'])
 
             if msg.phase == "PHASE2A":
-
                 if msg.c_rnd >= self.instances[msg.instance_index]["rnd"]:
                     self.instances[msg.instance_index]["v_rnd"] = msg.c_rnd 
                     self.instances[msg.instance_index]["v_val"] = msg.c_val 

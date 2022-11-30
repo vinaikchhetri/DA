@@ -32,7 +32,8 @@ class Learner(Thread):
         return recv_sock
 
     def create_instance(self, msg):
-        self.instances[msg.instance_index] = {"v_val":None}
+        if not msg.instance_index in self.instances:
+            self.instances[msg.instance_index] = {"v_val":None}
 
     def print_message(self, msg):
         print(msg)
@@ -48,7 +49,7 @@ class Learner(Thread):
             msg = pickle.loads(msg)
             self.create_instance(msg)
 
-            if msg.phase == "DECISION":
+            if msg.phase == "DECISION" and self.instances[msg.instance_index]["v_val"]==None:
                 self.instances[msg.instance_index]["v_val"] = msg.v_val
                 self.print_message(msg)
 
