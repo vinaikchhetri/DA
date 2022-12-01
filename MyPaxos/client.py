@@ -23,15 +23,15 @@ class Client(Thread):
 
     def run(self):
         print ('-> client ', self.id)
-        while True:
-            for value in sys.stdin:
-                value = value.strip()
-                msg = message()
-                msg.phase = "CLIENT-REQUEST"
-                msg.client_val = value
-                msg = pickle.dumps(msg)
-                print ("client: sending %s to proposers" % (value))
-                self.sender.sendto(msg, self.config['proposers'])
+        
+        for value in sys.stdin:
+            value = value.strip()
+            msg = message()
+            msg.phase = "CLIENT-REQUEST"
+            msg.client_val = value
+            msg = pickle.dumps(msg)
+            print ("client: sending %s to proposers" % (value))
+            self.sender.sendto(msg, self.config['proposers'])
 
         
         

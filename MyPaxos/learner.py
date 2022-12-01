@@ -36,6 +36,7 @@ class Learner(Thread):
             self.instances[msg.instance_index] = {"v_val":None}
 
     def print_message(self, msg):
+        print("LOG")
         print(msg)
         sys.stdout.flush()
     
