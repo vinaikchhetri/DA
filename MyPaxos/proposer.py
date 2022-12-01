@@ -102,7 +102,6 @@ class Proposer(Thread):
             
             # if msg.pid == self.id: 
             if msg.phase == "PHASE1B":
-                
                 if msg.instance_index in self.instances:
                     crnd = self.instances[msg.instance_index]["c_rnd"]
                     if msg.rnd == crnd and msg.v_rnd > self.instances[msg.instance_index]["k"]:

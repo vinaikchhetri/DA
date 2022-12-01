@@ -14,14 +14,14 @@ KILLCMD="pkill -f $conf"
 ./learner.sh 1 ../paxos.conf &
 
 sleep 5
-# ./client.sh 1 ../paxos.conf <<<"123 
-#  224 
-#  555" &
+#Test for phase1-a rejection
 
-#  ./client.sh 2 ../paxos.conf <<<"0
-#  10 
-#  100" &
-./client.sh 1 ../paxos.conf <<<"123" &
+./client.sh 1 ../paxos.conf <<<"123 
+ 224
+ 555" &
+
+ ./client.sh 2 ../paxos.conf <<<"0" &
+# ./client.sh 1 ../paxos.conf <<<"123" &
 
 sleep 5
 
