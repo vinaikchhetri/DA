@@ -10,4 +10,4 @@ class message:
     v_rnd: int = 0
     v_val: int = None
     client_val: int = None
-    pid: int = None
+    # pid: int = None
