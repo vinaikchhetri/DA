@@ -3,6 +3,8 @@ import socket
 import struct
 import pickle
 import sys
+import time
+
 
 from message import message
 
@@ -45,6 +47,7 @@ class Acceptor(Thread):
             newmsg.rnd = self.instances[msg.instance_index]["rnd"]
             newmsg.v_rnd = self.instances[msg.instance_index]["v_rnd"]
             newmsg.v_val = self.instances[msg.instance_index]["v_val"]
+            newmsg.c_val = msg.client_val #delete
 
         elif msg.phase == "PHASE1A-REJECTED":
             newmsg.instance_index = msg.instance_index 
@@ -76,29 +79,30 @@ class Acceptor(Thread):
 
             if msg.phase == "PHASE1A":
                 print(msg)
-                sys.stdout.flush()
                 if msg.c_rnd > self.instances[msg.instance_index]["rnd"]:
                     self.instances[msg.instance_index]["rnd"] = msg.c_rnd 
                     newmsg = self.create_message(msg)
                     newmsg = pickle.dumps(newmsg)
-                    self.sender.sendto(newmsg, self.config['proposers'])
-                else:
-                    print(msg)
-                    sys.stdout.flush()
-                    msg.phase = "PHASE1A-REJECTED"
-                    newmsg = self.create_message(msg)
-                    newmsg = pickle.dumps(newmsg)
-                    self.sender.sendto(newmsg, self.config['proposers'])
+                    if msg.c_rnd!=1:
+                        self.sender.sendto(newmsg, self.config['proposers'])
+                
+            #     else:
+            #         print(msg)
+            #         sys.stdout.flush()
+            #         msg.phase = "PHASE1A-REJECTED"
+            #         newmsg = self.create_message(msg)
+            #         newmsg = pickle.dumps(newmsg)
+            #         self.sender.sendto(newmsg, self.config['proposers'])
 
-            if msg.phase == "PHASE2A":
-                print(msg)
-                sys.stdout.flush()
-                if msg.c_rnd >= self.instances[msg.instance_index]["rnd"]:
-                    self.instances[msg.instance_index]["v_rnd"] = msg.c_rnd 
-                    self.instances[msg.instance_index]["v_val"] = msg.c_val 
-                    newmsg = self.create_message(msg)
-                    newmsg = pickle.dumps(newmsg)
-                    self.sender.sendto(newmsg, self.config['proposers'])
+            # if msg.phase == "PHASE2A":
+            #     print(msg)
+            #     sys.stdout.flush()
+            #     if msg.c_rnd >= self.instances[msg.instance_index]["rnd"]:
+            #         self.instances[msg.instance_index]["v_rnd"] = msg.c_rnd 
+            #         self.instances[msg.instance_index]["v_val"] = msg.c_val 
+            #         newmsg = self.create_message(msg)
+            #         newmsg = pickle.dumps(newmsg)
+            #         self.sender.sendto(newmsg, self.config['proposers'])
 
                 
 

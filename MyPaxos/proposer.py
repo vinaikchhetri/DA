@@ -3,8 +3,10 @@ import socket
 import struct
 import pickle
 import sys
+import time
 
 from message import message
+
 
 NUM_ACCEPTORS = 3.0
 class Proposer(Thread):
@@ -38,7 +40,7 @@ class Proposer(Thread):
         self.instances[self.instance_index] = {"c_rnd":0, "c_val":None, 
         "votes1":{}, "votes2":{},
         "client_val":msg.client_val, "k":0, "k_val":None, 
-        "nack1":{}}
+        "timer_stop":False}
 
     def create_message(self, msg):
         newmsg = message()
@@ -77,8 +79,25 @@ class Proposer(Thread):
     def print_instance(self, id):
         print(self.instances[id])
         sys.stdout.flush()
+    
+    def timer(self, msg):
+        begin = time.time()
+        while(self.instances[msg.instance_index]["timer_stop"]==False):
+            if time.time()-begin>1:
+                print("broken")
+                sys.stdout.flush()
+                if msg.phase == "PHASE1A":
+                    self.instances[msg.instance_index]["c_rnd"] += 100
+                    msg.phase = "PHASE1A-REDO"
+                    newmsg = self.create_message(msg)
+                    t = Thread(target=self.timer, args = (newmsg,))
+                    newmsg = pickle.dumps(newmsg)
+                    t.start()
+                    self.sender.sendto(newmsg, self.config['acceptors'])
+                    break
 
 
+    
     def run(self):
         global NUM_ACCEPTORS
 
@@ -96,76 +115,88 @@ class Proposer(Thread):
                 self.instances[self.instance_index]["c_rnd"] = self.id
                 self.instances[self.instance_index]["votes1"][self.id] = 0
                 self.instances[self.instance_index]["votes2"][self.id] = 0
-                self.instances[self.instance_index]["nack1"][self.id] = 0
+                t = Thread(target=self.timer, args = (newmsg,))
+                t.start()
                 newmsg = pickle.dumps(newmsg)
                 self.sender.sendto(newmsg, self.config['acceptors'])
+
             
-            # if msg.pid == self.id: 
             if msg.phase == "PHASE1B":
                 if msg.instance_index in self.instances:
                     crnd = self.instances[msg.instance_index]["c_rnd"]
-                    if msg.rnd == crnd and msg.v_rnd > self.instances[msg.instance_index]["k"]:
-                        self.instances[msg.instance_index]["k"] = msg.v_rnd
-                        self.instances[msg.instance_index]["k_val"] = msg.v_val
+                    if msg.rnd == crnd:
+                        self.instances[msg.instance_index]["timer_stop"]=True
+                        print("done")
+                        print(msg)
+                    
+
+            
+            # # if msg.pid == self.id: 
+            # if msg.phase == "PHASE1B":
+            #     if msg.instance_index in self.instances:
+            #         crnd = self.instances[msg.instance_index]["c_rnd"]
+            #         if msg.rnd == crnd and msg.v_rnd > self.instances[msg.instance_index]["k"]:
+            #             self.instances[msg.instance_index]["k"] = msg.v_rnd
+            #             self.instances[msg.instance_index]["k_val"] = msg.v_val
                         
                     
-                    if msg.rnd == crnd:
-                        self.instances[msg.instance_index]["votes1"][crnd] += 1
-                        print(msg)
-                        sys.stdout.flush()
+            #         if msg.rnd == crnd:
+            #             self.instances[msg.instance_index]["votes1"][crnd] += 1
+            #             print(msg)
+            #             sys.stdout.flush()
 
-                    if self.instances[msg.instance_index]["votes1"][crnd] > int(NUM_ACCEPTORS/2):
-                        self.instances[msg.instance_index]["votes1"][crnd] = 0
-                        if self.instances[msg.instance_index]["k"]==0:
-                            self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["client_val"]
-                        else:
-                            self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["k_val"]
-                        newmsg = self.create_message(msg)
-                        newmsg = pickle.dumps(newmsg)
-                        self.sender.sendto(newmsg, self.config['acceptors'])
+            #         if self.instances[msg.instance_index]["votes1"][crnd] > int(NUM_ACCEPTORS/2):
+            #             self.instances[msg.instance_index]["votes1"][crnd] = 0
+            #             if self.instances[msg.instance_index]["k"]==0:
+            #                 self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["client_val"]
+            #             else:
+            #                 self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["k_val"]
+            #             newmsg = self.create_message(msg)
+            #             newmsg = pickle.dumps(newmsg)
+            #             self.sender.sendto(newmsg, self.config['acceptors'])
 
-            if msg.phase == "PHASE2B":
-                if msg.instance_index in self.instances:
-                    crnd = self.instances[msg.instance_index]["c_rnd"]
+            # if msg.phase == "PHASE2B":
+            #     if msg.instance_index in self.instances:
+            #         crnd = self.instances[msg.instance_index]["c_rnd"]
 
-                    if msg.v_rnd == crnd:
-                        self.instances[msg.instance_index]["votes2"][crnd]+=1
-                        print(msg)
-                        sys.stdout.flush()
+            #         if msg.v_rnd == crnd:
+            #             self.instances[msg.instance_index]["votes2"][crnd]+=1
+            #             print(msg)
+            #             sys.stdout.flush()
 
-                    if self.instances[msg.instance_index]["votes2"][crnd] > int(NUM_ACCEPTORS/2):
-                        self.instances[msg.instance_index]["votes2"][crnd] = 0
-                        newmsg = self.create_message(msg)
-                        newmsg = pickle.dumps(newmsg)
-                        self.sender.sendto(newmsg, self.config['learners'])
+            #         if self.instances[msg.instance_index]["votes2"][crnd] > int(NUM_ACCEPTORS/2):
+            #             self.instances[msg.instance_index]["votes2"][crnd] = 0
+            #             newmsg = self.create_message(msg)
+            #             newmsg = pickle.dumps(newmsg)
+            #             self.sender.sendto(newmsg, self.config['learners'])
             
-            if msg.phase == "PHASE1A-REDO":
-                if msg.instance_index in self.instances:
-                    crnd = self.instances[msg.instance_index]["c_rnd"]
+            # if msg.phase == "PHASE1A-REDO":
+            #     if msg.instance_index in self.instances:
+            #         crnd = self.instances[msg.instance_index]["c_rnd"]
 
-                    if msg.c_rnd == crnd: 
-                        self.instances[msg.instance_index]["nack1"][crnd]+=1
-                        print(msg)
-                        sys.stdout.flush()
+            #         if msg.c_rnd == crnd: 
+            #             self.instances[msg.instance_index]["nack1"][crnd]+=1
+            #             print(msg)
+            #             sys.stdout.flush()
 
-                    if self.instances[msg.instance_index]["nack1"][crnd] > int(NUM_ACCEPTORS/2):
-                        self.instances[msg.instance_index]["nack1"][crnd] = 0
-                        self.instances[msg.instance_index]["c_rnd"] += 100
-                        icrnd = self.instances[msg.instance_index]["c_rnd"]
-                        self.instances[msg.instance_index]["votes1"][icrnd] = 0
-                        self.instances[msg.instance_index]["votes2"][icrnd] = 0
-                        self.instances[msg.instance_index]["nack1"][icrnd] = 0
-                        newmsg = self.create_message(msg)
-                        newmsg = pickle.dumps(newmsg)
-                        self.sender.sendto(newmsg, self.config['acceptors'])
+            #         if self.instances[msg.instance_index]["nack1"][crnd] > int(NUM_ACCEPTORS/2):
+            #             self.instances[msg.instance_index]["nack1"][crnd] = 0
+            #             self.instances[msg.instance_index]["c_rnd"] += 100
+            #             icrnd = self.instances[msg.instance_index]["c_rnd"]
+            #             self.instances[msg.instance_index]["votes1"][icrnd] = 0
+            #             self.instances[msg.instance_index]["votes2"][icrnd] = 0
+            #             self.instances[msg.instance_index]["nack1"][icrnd] = 0
+            #             newmsg = self.create_message(msg)
+            #             newmsg = pickle.dumps(newmsg)
+            #             self.sender.sendto(newmsg, self.config['acceptors'])
 
-                        # self.create_instance(msg)
-                        # # print(msg.pid)
-                        # msg.phase = "CLIENT-REQUEST"            
-                        # newmsg = self.create_message(msg)
-                        # self.instances[self.instance_index]["c_rnd"] = self.id
-                        # newmsg = pickle.dumps(newmsg)
-                        # self.sender.sendto(newmsg, self.config['acceptors'])
+            #             # self.create_instance(msg)
+            #             # # print(msg.pid)
+            #             # msg.phase = "CLIENT-REQUEST"            
+            #             # newmsg = self.create_message(msg)
+            #             # self.instances[self.instance_index]["c_rnd"] = self.id
+            #             # newmsg = pickle.dumps(newmsg)
+            #             # self.sender.sendto(newmsg, self.config['acceptors'])
 
 
                     
