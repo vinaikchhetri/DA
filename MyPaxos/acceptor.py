@@ -83,8 +83,7 @@ class Acceptor(Thread):
                     self.instances[msg.instance_index]["rnd"] = msg.c_rnd 
                     newmsg = self.create_message(msg)
                     newmsg = pickle.dumps(newmsg)
-                    if msg.c_rnd!=1:
-                        self.sender.sendto(newmsg, self.config['proposers'])
+                    self.sender.sendto(newmsg, self.config['proposers'])
                 
             #     else:
             #         print(msg)
