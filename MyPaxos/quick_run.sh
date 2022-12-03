@@ -44,30 +44,42 @@ KILLCMD="pkill -f $conf"
 sleep 5
 #Test for phase1-a rejection
 
-# ./client.sh 1 ../paxos.conf <<<"123"&
-# ./client.sh 2 ../paxos.conf <<<"456"&
+# ./client.sh 1 ../paxos.conf <<<"1
+# 11
+# 111
+# 1111
+# 12
+# 11111111"&
+# ./client.sh 2 ../paxos.conf <<<"2
+# 22
+# 222
+# 2222
+# 21
+# 222222"&
 
-# ./client.sh 1 ../paxos.conf <<<"111 
-#  222
-#  333" &
+./client.sh 1 ../paxos.conf <<<"1
+2
+3
+4
+5
+6
+7
+8
+9"&
 
-#  ./client.sh 2 ../paxos.conf <<<"666 
-#  777
-#  888" &
+./client.sh 2 ../paxos.conf <<<"11
+22
+33
+44
+55
+66
+77
+88
+99"&
 
-./client.sh 1 ../paxos.conf <<<"111 
- 222
- 333
- 444
- 555" &
 
- ./client.sh 2 ../paxos.conf <<<"666 
- 777
- 888
- 999
- 000" &
 
-sleep 10
+sleep 70
 
 $KILLCMD
 wait

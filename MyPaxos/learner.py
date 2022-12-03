@@ -16,6 +16,7 @@ class Learner(Thread):
         self.config = config
         self.sender = self.send_config()
         self.receiver = self.receive_config()
+        self.len=0
     
     def send_config(self):
         sock = socket.socket(socket.AF_INET,
@@ -36,7 +37,7 @@ class Learner(Thread):
             self.instances[msg.instance_index] = {"v_val":None}
 
     def print_message(self, msg):
-        print("LOG")
+        print("LOG",self.len)
         print(msg)
         sys.stdout.flush()
     
@@ -52,6 +53,7 @@ class Learner(Thread):
 
             # if msg.phase == "DECISION" and self.instances[msg.instance_index]["v_val"]==None:
             if msg.phase == "DECISION":
+                self.len+=1
                 self.instances[msg.instance_index]["v_val"] = msg.v_val
                 self.print_message(msg)
 

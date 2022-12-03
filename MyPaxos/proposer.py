@@ -50,7 +50,8 @@ class Proposer(Thread):
             newmsg.instance_index = self.instance_index 
             newmsg.phase = "PHASE1A"
             newmsg.c_rnd = self.id
-            newmsg.client_val = msg.client_val
+            # newmsg.client_val = msg.client_val
+            newmsg.client_val = self.instances[self.instance_index]["client_val"]
 
         elif msg.phase == "PHASE1B":
             newmsg.instance_index = msg.instance_index 
@@ -83,11 +84,15 @@ class Proposer(Thread):
     
     def timer(self, msg):
         begin = time.time()
-
+        co = 0
         while(self.instances[msg.instance_index]["timer_stop"]==False):
-            if time.time()-begin>3:
-                print("broken:",msg)
-                sys.stdout.flush()
+            # if co==0:
+            #     print("#######",time.time()-begin)
+            #     sys.stdout.flush()
+            # co+=1
+            if time.time()-begin>15:
+                # print("broken:",msg)
+                # sys.stdout.flush()
               
                 if msg.phase == "PHASE1A":
                     self.instances[msg.instance_index]["c_rnd"] += 100
@@ -108,12 +113,14 @@ class Proposer(Thread):
         begin = time.time()
 
         while(self.instances[msg.instance_index]["timer_stop2"]==False):
-            if time.time()-begin>3:
-                print("broken2:",msg)
-                sys.stdout.flush()
+            if time.time()-begin>15:
+                # print("broken2:",msg)
+                # sys.stdout.flush()
 
 
                 if msg.phase == "PHASE2A":
+                    # print("inside->broken2:",msg)
+                    sys.stdout.flush()
                     self.instances[msg.instance_index]["c_rnd"] += 100
              
                     ic_rnd = self.instances[msg.instance_index]["c_rnd"]
@@ -122,7 +129,7 @@ class Proposer(Thread):
                     msg.phase = "PHASE1A-REDO"
                     
                     newmsg = self.create_message(msg)
-                    t = Thread(target=self.timer2, args = (newmsg,))
+                    t = Thread(target=self.timer, args = (newmsg,))
                     newmsg = pickle.dumps(newmsg)
                     t.start()
                     self.sender.sendto(newmsg, self.config['acceptors'])
@@ -143,8 +150,8 @@ class Proposer(Thread):
 
 
             if msg.phase == "CLIENT-REQUEST": 
-                print(msg)
-                sys.stdout.flush()
+                #print(msg)
+                #sys.stdout.flush()
                 self.create_instance(msg)            
                 newmsg = self.create_message(msg)
                 self.instances[self.instance_index]["c_rnd"] = self.id
@@ -173,22 +180,54 @@ class Proposer(Thread):
                         
                     if msg.rnd == crnd:
                         self.instances[msg.instance_index]["votes1"][crnd] += 1
-                        print(msg)
-                        sys.stdout.flush()
+                        # print(msg)
+                        # sys.stdout.flush()
 
                     if self.instances[msg.instance_index]["votes1"][crnd] > int(NUM_ACCEPTORS/2):
                         self.instances[msg.instance_index]["timer_stop"]=True
                         self.instances[msg.instance_index]["votes1"][crnd] = 0
+
+                        # if self.instances[msg.instance_index]["k"]==0:
+                        #     self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["client_val"]
+ 
+                        # else:
+                        #     self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["k_val"]
+                        
+                        # newmsg = self.create_message(msg)
+                        # t = Thread(target=self.timer2, args = (newmsg,))
+                        # t.start()
+                        # newmsg = pickle.dumps(newmsg)
+                        # self.sender.sendto(newmsg, self.config['acceptors'])
+
                         if self.instances[msg.instance_index]["k"]==0:
                             self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["client_val"]
+                            newmsg = self.create_message(msg)
+                            # self.instances[msg.instance_index]["timer_stop"]=False
+                            t = Thread(target=self.timer2, args = (newmsg,))
+                            t.start()
+                            newmsg = pickle.dumps(newmsg)
+                            self.sender.sendto(newmsg, self.config['acceptors'])
                         else:
                             self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["k_val"]
-                        newmsg = self.create_message(msg)
-                        # self.instances[msg.instance_index]["timer_stop"]=False
-                        t = Thread(target=self.timer2, args = (newmsg,))
-                        t.start()
-                        newmsg = pickle.dumps(newmsg)
-                        self.sender.sendto(newmsg, self.config['acceptors'])
+                            newmsg = self.create_message(msg)
+                            # self.instances[msg.instance_index]["timer_stop"]=False
+                            t = Thread(target=self.timer2, args = (newmsg,))
+                            t.start()
+                            newmsg = pickle.dumps(newmsg)
+                            self.sender.sendto(newmsg, self.config['acceptors'])
+
+                            self.create_instance(msg)
+                            msg.phase = "CLIENT-REQUEST"            
+                            newmsg = self.create_message(msg)
+                            self.instances[self.instance_index]["c_rnd"] = self.id
+                            self.instances[self.instance_index]["votes1"][self.id] = 0
+                            self.instances[self.instance_index]["votes2"][self.id] = 0
+                            nt = Thread(target=self.timer, args = (newmsg,))
+                            nt.start()
+                            newmsg = pickle.dumps(newmsg)
+                            self.sender.sendto(newmsg, self.config['acceptors'])
+
+
 
             if msg.phase == "PHASE2B":
                 if msg.instance_index in self.instances:
@@ -196,8 +235,8 @@ class Proposer(Thread):
 
                     if msg.v_rnd == crnd:
                         self.instances[msg.instance_index]["votes2"][crnd]+=1
-                        print(msg)
-                        sys.stdout.flush()
+                        # print(msg)
+                        # sys.stdout.flush()
 
                     if self.instances[msg.instance_index]["votes2"][crnd] > int(NUM_ACCEPTORS/2):
                         self.instances[msg.instance_index]["timer_stop2"]=True
