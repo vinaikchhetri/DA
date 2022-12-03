@@ -144,7 +144,26 @@ class Proposer(Thread):
                         self.instances[self.instance_index]["c_rnd"] = self.id
                         newmsg = pickle.dumps(newmsg)
                         self.sender.sendto(newmsg, self.config['acceptors'])
-
+            
+            if msg.phase == "LEARNER-CATCHUP":
+                print("PROPOSER HERE 1")
+                
+                #check for instance index
+                # if instance index exists with a decided value: then return it to the learner
+                # else: run paxos again from scratch
+                if msg.instance_index in self.instances:
+                    print("PROPOSER HERE 2")
+                    existing_msg = self.instances[msg.instance_index]
+                    newmsg = message()
+                    newmsg.instance_index = existing_msg.instance_index 
+                    newmsg.phase = "LEARNER-CATCHUP"
+                    newmsg.learner_id = msg.learner_id
+                    newmsg.v_val = existing_msg.v_val
+                    newmsg = pickle.dumps(newmsg)
+                    self.sender.sendto(newmsg, self.config['learners'])
+                else:
+                    print("RUN PAXOS AFTER LEARNER HAS REQUESTED IT")
+                    pass
 
                     
 
