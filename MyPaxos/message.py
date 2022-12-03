@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 @dataclass
 class message:
@@ -10,4 +10,5 @@ class message:
     v_rnd: int = 0
     v_val: int = None
     client_val: int = None
+    decisions: dict = field(default_factory=dict)
     # pid: int = None
