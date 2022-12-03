@@ -40,7 +40,7 @@ class Proposer(Thread):
         self.instances[self.instance_index] = {"c_rnd":0, "c_val":None, 
         "votes1":{}, "votes2":{},
         "client_val":msg.client_val, "k":0, "k_val":None, 
-        "timer_stop":False}
+        "timer_stop":False, "timer_stop2":False}
 
     def create_message(self, msg):
         newmsg = message()
@@ -57,6 +57,7 @@ class Proposer(Thread):
             newmsg.phase = "PHASE2A"
             newmsg.c_rnd = self.instances[msg.instance_index]["c_rnd"]
             newmsg.c_val = self.instances[msg.instance_index]["c_val"]
+            newmsg.client_val = msg.client_val #delete
 
         elif msg.phase == "PHASE2B":
             newmsg.instance_index = msg.instance_index 
@@ -82,22 +83,67 @@ class Proposer(Thread):
     
     def timer(self, msg):
         begin = time.time()
+
         while(self.instances[msg.instance_index]["timer_stop"]==False):
-            if time.time()-begin>1:
-                print("broken")
+            if time.time()-begin>4:
+                print("broken:",msg)
                 sys.stdout.flush()
+                broken = True
                 if msg.phase == "PHASE1A":
                     self.instances[msg.instance_index]["c_rnd"] += 100
                     ic_rnd = self.instances[msg.instance_index]["c_rnd"]
-                    self.instances[self.instance_index]["votes1"][ic_rnd] = 0
-                    self.instances[self.instance_index]["votes2"][ic_rnd] = 0
+                    self.instances[msg.instance_index]["votes1"][ic_rnd] = 0
+                    self.instances[msg.instance_index]["votes2"][ic_rnd] = 0
                     msg.phase = "PHASE1A-REDO"
+                    newmsg = self.create_message(msg)
+                    t = Thread(target=self.timer, args = (newmsg,))
+                    newmsg = pickle.dumps(newmsg)
+                    t.start()
+                    # time.sleep(1)
+                    self.sender.sendto(newmsg, self.config['acceptors'])
+                    break
+
+                elif msg.phase == "PHASE2A":
+                    self.instances[msg.instance_index]["c_rnd"] += 100
+             
+                    ic_rnd = self.instances[msg.instance_index]["c_rnd"]
+                    self.instances[msg.instance_index]["votes1"][ic_rnd] = 0
+                    self.instances[msg.instance_index]["votes2"][ic_rnd] = 0
+                    msg.phase = "PHASE1A-REDO"
+                    
                     newmsg = self.create_message(msg)
                     t = Thread(target=self.timer, args = (newmsg,))
                     newmsg = pickle.dumps(newmsg)
                     t.start()
                     self.sender.sendto(newmsg, self.config['acceptors'])
                     break
+
+    def timer2(self, msg):
+        begin = time.time()
+
+        while(self.instances[msg.instance_index]["timer_stop2"]==False):
+            if time.time()-begin>4:
+                print("broken2:",msg)
+                sys.stdout.flush()
+
+
+                if msg.phase == "PHASE2A":
+                    self.instances[msg.instance_index]["c_rnd"] += 100
+             
+                    ic_rnd = self.instances[msg.instance_index]["c_rnd"]
+                    self.instances[msg.instance_index]["votes1"][ic_rnd] = 0
+                    self.instances[msg.instance_index]["votes2"][ic_rnd] = 0
+                    msg.phase = "PHASE1A-REDO"
+                    
+                    newmsg = self.create_message(msg)
+                    t = Thread(target=self.timer2, args = (newmsg,))
+                    newmsg = pickle.dumps(newmsg)
+                    t.start()
+                    self.sender.sendto(newmsg, self.config['acceptors'])
+                    break
+    
+    
+
 
 
     
@@ -152,24 +198,27 @@ class Proposer(Thread):
                         else:
                             self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["k_val"]
                         newmsg = self.create_message(msg)
-                        print(newmsg)
-                        #newmsg = pickle.dumps(newmsg)
-                        #self.sender.sendto(newmsg, self.config['acceptors'])
+                        # self.instances[msg.instance_index]["timer_stop"]=False
+                        t = Thread(target=self.timer2, args = (newmsg,))
+                        t.start()
+                        newmsg = pickle.dumps(newmsg)
+                        self.sender.sendto(newmsg, self.config['acceptors'])
 
-            # if msg.phase == "PHASE2B":
-            #     if msg.instance_index in self.instances:
-            #         crnd = self.instances[msg.instance_index]["c_rnd"]
+            if msg.phase == "PHASE2B":
+                if msg.instance_index in self.instances:
+                    crnd = self.instances[msg.instance_index]["c_rnd"]
 
-            #         if msg.v_rnd == crnd:
-            #             self.instances[msg.instance_index]["votes2"][crnd]+=1
-            #             print(msg)
-            #             sys.stdout.flush()
+                    if msg.v_rnd == crnd:
+                        self.instances[msg.instance_index]["votes2"][crnd]+=1
+                        print(msg)
+                        sys.stdout.flush()
 
-            #         if self.instances[msg.instance_index]["votes2"][crnd] > int(NUM_ACCEPTORS/2):
-            #             self.instances[msg.instance_index]["votes2"][crnd] = 0
-            #             newmsg = self.create_message(msg)
-            #             newmsg = pickle.dumps(newmsg)
-            #             self.sender.sendto(newmsg, self.config['learners'])
+                    if self.instances[msg.instance_index]["votes2"][crnd] > int(NUM_ACCEPTORS/2):
+                        self.instances[msg.instance_index]["timer_stop2"]=True
+                        self.instances[msg.instance_index]["votes2"][crnd] = 0
+                        newmsg = self.create_message(msg)
+                        newmsg = pickle.dumps(newmsg)
+                        self.sender.sendto(newmsg, self.config['learners'])
             
             # if msg.phase == "PHASE1A-REDO":
             #     if msg.instance_index in self.instances:
