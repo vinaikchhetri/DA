@@ -47,13 +47,25 @@ sleep 5
 # ./client.sh 1 ../paxos.conf <<<"123"&
 # ./client.sh 2 ../paxos.conf <<<"456"&
 
+# ./client.sh 1 ../paxos.conf <<<"111 
+#  222
+#  333" &
+
+#  ./client.sh 2 ../paxos.conf <<<"666 
+#  777
+#  888" &
+
 ./client.sh 1 ../paxos.conf <<<"111 
  222
- 333" &
+ 333
+ 444
+ 555" &
 
  ./client.sh 2 ../paxos.conf <<<"666 
  777
- 888" &
+ 888
+ 999
+ 000" &
 
 sleep 10
 

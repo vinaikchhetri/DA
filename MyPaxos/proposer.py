@@ -85,10 +85,10 @@ class Proposer(Thread):
         begin = time.time()
 
         while(self.instances[msg.instance_index]["timer_stop"]==False):
-            if time.time()-begin>4:
+            if time.time()-begin>3:
                 print("broken:",msg)
                 sys.stdout.flush()
-                broken = True
+              
                 if msg.phase == "PHASE1A":
                     self.instances[msg.instance_index]["c_rnd"] += 100
                     ic_rnd = self.instances[msg.instance_index]["c_rnd"]
@@ -103,26 +103,12 @@ class Proposer(Thread):
                     self.sender.sendto(newmsg, self.config['acceptors'])
                     break
 
-                elif msg.phase == "PHASE2A":
-                    self.instances[msg.instance_index]["c_rnd"] += 100
-             
-                    ic_rnd = self.instances[msg.instance_index]["c_rnd"]
-                    self.instances[msg.instance_index]["votes1"][ic_rnd] = 0
-                    self.instances[msg.instance_index]["votes2"][ic_rnd] = 0
-                    msg.phase = "PHASE1A-REDO"
-                    
-                    newmsg = self.create_message(msg)
-                    t = Thread(target=self.timer, args = (newmsg,))
-                    newmsg = pickle.dumps(newmsg)
-                    t.start()
-                    self.sender.sendto(newmsg, self.config['acceptors'])
-                    break
 
     def timer2(self, msg):
         begin = time.time()
 
         while(self.instances[msg.instance_index]["timer_stop2"]==False):
-            if time.time()-begin>4:
+            if time.time()-begin>3:
                 print("broken2:",msg)
                 sys.stdout.flush()
 
