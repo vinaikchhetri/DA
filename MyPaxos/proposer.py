@@ -122,6 +122,9 @@ class Proposer(Thread):
                         self.instances[msg.instance_index]["votes2"] = int(int(NUM_ACCEPTORS/2) - NUM_ACCEPTORS + 1)
                         newmsg = self.create_message(msg)
                         newmsg = pickle.dumps(newmsg)
+
+                        self.instances[msg.instance_index]["v_val"] = msg.v_val #save v_val locally
+
                         self.sender.sendto(newmsg, self.config['learners'])
             
             if msg.phase == "PHASE1A-REDO":
@@ -153,16 +156,17 @@ class Proposer(Thread):
                 # else: run paxos again from scratch
                 if msg.instance_index in self.instances:
                     print("PROPOSER HERE 2")
-                    existing_msg = self.instances[msg.instance_index]
+                    print(self.instances[msg.instance_index])
                     newmsg = message()
-                    newmsg.instance_index = existing_msg.instance_index 
+                    newmsg.instance_index =  msg.instance_index
                     newmsg.phase = "LEARNER-CATCHUP"
                     newmsg.learner_id = msg.learner_id
-                    newmsg.v_val = existing_msg.v_val
+                    newmsg.v_val = self.instances[msg.instance_index]["v_val"]
                     newmsg = pickle.dumps(newmsg)
                     self.sender.sendto(newmsg, self.config['learners'])
                 else:
                     print("RUN PAXOS AFTER LEARNER HAS REQUESTED IT")
+                    print(msg.instance_index)
                     pass
 
                     
