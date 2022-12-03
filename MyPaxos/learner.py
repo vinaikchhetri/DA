@@ -11,11 +11,14 @@ class Learner(Thread):
     def __init__(self, addr, id, config):
         Thread.__init__(self)
         self.instances = {}
+        self.instance_index = -1
+        self.delivered_index = -1
         self.addr = addr
         self.id = id
         self.config = config
         self.sender = self.send_config()
         self.receiver = self.receive_config()
+        self.deliver = True
     
     def send_config(self):
         sock = socket.socket(socket.AF_INET,
@@ -36,11 +39,32 @@ class Learner(Thread):
             self.instances[msg.instance_index] = {"v_val":None}
 
     def print_message(self, msg):
+        print("LOG")
         print(msg)
         sys.stdout.flush()
     
     def print_instance(self, id):
         print(self.instances[id])
+
+    def catch_up(self):
+        for i in range(0, self.instance_index + 1):
+            if i != -1 and i not in self.instances:
+                self.deliver = False
+                break
+
+        if self.deliver:
+            for i in range((self.delivered_index + 1), (len(self.instances))):
+                if i in self.instances and self.instances[i]['v_val'] is not None:
+                    print(f"Instance {i}:")
+                    print(self.instances[i]['v_val'], flush=True)          
+            self.delivered_index = len(self.instances)-1
+
+        else:
+            msg = message()
+            msg.phase = "LEARNER-CATCHUP"
+            msg = pickle.dumps(msg)
+            print (f"{self} sends catch up request to proposers")
+            self.sender.sendto(msg, self.config['proposers'])
 
     def run(self):
         print ('-> learner', self.id)
@@ -49,18 +73,34 @@ class Learner(Thread):
             msg = pickle.loads(msg)
             self.create_instance(msg)
 
-            # if msg.phase == "DECISION" and self.instances[msg.instance_index]["v_val"]==None:
+
             if msg.phase == "DECISION":
-                self.instances[msg.instance_index]["v_val"] = msg.v_val
-                self.print_message(msg)
-
-                
-
-
-
-        
-
+                if msg.instance_index is not None and msg.instance_index > self.instance_index:
+                    self.instance_index  = msg.instance_index 
+                if msg.instance_index not in self.instances:
+                    self.instances[msg.instance_index] = {'v_val': None}
+                self.instances[msg.instance_index]['v_val'] = msg.v_val
+                self.deliver = True
+                self.catch_up()
 
 
+            elif msg.phase == "INSTANCE-CATCHUP":
+                if msg.instance_index > self.instance_index:
+                    if self.instance_index == -1:     
+                        self.instance_index = msg.instance_index
+                        self.catch_up()
+                    else:
+                        self.instance_index = msg.instance_index
 
+
+            elif msg.phase == "LEARNER-CATCHUP":
+                if msg.decisions is not None:
+                    if len(msg.decisions) - 1 > self.instance_index:
+                        self.instance_index = len(msg.decisions) - 1
+                    for instance in msg.decisions:
+                        if instance not in self.instances or self.instances[instance]['v_val'] is None:
+                            self.instances[instance] = {'v_val': msg.decisions.instance}
+                self.can_deliver = True
+                self.catch_up()
+    
     
