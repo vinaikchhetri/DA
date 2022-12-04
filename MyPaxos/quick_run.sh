@@ -39,7 +39,8 @@ KILLCMD="pkill -f $conf"
 ./acceptor.sh 2 ../paxos.conf &
 ./acceptor.sh 3 ../paxos.conf &
 
-./learner.sh 1 ../paxos.conf &
+./learner.sh 1 ../paxos.conf > ../learn1 &
+./learner.sh 2 ../paxos.conf > ../learn2 &
 
 sleep 5
 #Test for phase1-a rejection

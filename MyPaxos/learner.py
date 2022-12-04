@@ -37,8 +37,8 @@ class Learner(Thread):
             self.instances[msg.instance_index] = {"v_val":None}
 
     def print_message(self, msg):
-        print("LOG",self.len)
-        print(msg)
+        #print("LOG "+str(self.id)+" :",self.len)
+        print(msg.v_val)
         sys.stdout.flush()
     
     def print_instance(self, id):
@@ -51,11 +51,15 @@ class Learner(Thread):
             msg = pickle.loads(msg)
             self.create_instance(msg)
 
-            # if msg.phase == "DECISION" and self.instances[msg.instance_index]["v_val"]==None:
-            if msg.phase == "DECISION":
+            if msg.phase == "DECISION" and self.instances[msg.instance_index]["v_val"]==None:
                 self.len+=1
                 self.instances[msg.instance_index]["v_val"] = msg.v_val
                 self.print_message(msg)
+
+            # if msg.phase == "DECISION":
+            #     self.len+=1
+            #     self.instances[msg.instance_index]["v_val"] = msg.v_val
+            #     self.print_message(msg)
 
                 
 
