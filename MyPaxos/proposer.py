@@ -182,6 +182,8 @@ class Proposer(Thread):
                         self.instances[msg.instance_index]["votes1"][crnd] += 1
                         # print(msg)
                         # sys.stdout.flush()
+                        # if self.instances[msg.instance_index]["votes1"][crnd] > int(NUM_ACCEPTORS/2)+1:
+                        #     self.instances[msg.instance_index]["votes1"][crnd] = 0
 
                     if self.instances[msg.instance_index]["votes1"][crnd] > int(NUM_ACCEPTORS/2):
                         self.instances[msg.instance_index]["timer_stop"]=True
@@ -237,6 +239,8 @@ class Proposer(Thread):
                         self.instances[msg.instance_index]["votes2"][crnd]+=1
                         # print(msg)
                         # sys.stdout.flush()
+                        # if self.instances[msg.instance_index]["votes2"][crnd] > int(NUM_ACCEPTORS/2)+1:
+                        #     self.instances[msg.instance_index]["votes2"][crnd] = 0
 
                     if self.instances[msg.instance_index]["votes2"][crnd] > int(NUM_ACCEPTORS/2):
                         self.instances[msg.instance_index]["timer_stop2"]=True
