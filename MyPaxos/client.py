@@ -3,6 +3,7 @@ import socket
 import struct
 import pickle
 import sys
+import time
 
 from message import message
 
@@ -23,15 +24,16 @@ class Client(Thread):
 
     def run(self):
         print ('-> client ', self.id)
-        
-        for value in sys.stdin:
-            value = value.strip()
-            msg = message()
-            msg.phase = "CLIENT-REQUEST"
-            msg.client_val = value
-            msg = pickle.dumps(msg)
-            print ("client: sending %s to proposers" % (value))
-            self.sender.sendto(msg, self.config['proposers'])
+        while True:        
+            for value in sys.stdin:
+                value = value.strip()
+                msg = message()
+                msg.phase = "CLIENT-REQUEST"
+                msg.client_val = value
+                msg = pickle.dumps(msg)
+                print ("client: sending %s to proposers" % (value))
+                self.sender.sendto(msg, self.config['proposers'])
+                time.sleep(0.001)
 
         
         
