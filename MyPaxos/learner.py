@@ -12,6 +12,7 @@ class Learner(Thread):
         Thread.__init__(self)
         self.instances = {}
         self.instances_queue = {}
+        self.first_run_flag = True
         self.addr = addr
         self.id = id
         self.config = config
@@ -63,42 +64,34 @@ class Learner(Thread):
 
             # if msg.phase == "DECISION" and self.instances[msg.instance_index]["v_val"]==None:
             if msg.phase == "DECISION":
-                print("HERE 1")
                 
-                if msg.instance_index == 0: #check if first message
+                if msg.instance_index == 0 or msg.instance_index - 1 in self.instances: #check if first message or if previous message was delivered
                     self.create_instance(msg)
                     self.instances[msg.instance_index]["v_val"] = msg.v_val
                     self.print_message(msg)
-                    print("HERE 2")
-                elif msg.instance_index != 0 and msg.instance_index - 1 in self.instances: #check if previous message was delivered
-                    self.create_instance(msg)
-                    self.instances[msg.instance_index]["v_val"] = msg.v_val
-                    self.print_message(msg)
-                    print("HERE 3")
 
                 #if not, then catch up
                 else:
-                    print("HERE 4")
                     #add the new message to the queue and then we add it to the main instances set once we are ready
                     self.create_instance_in_queue(msg)
                     self.instances_queue[msg.instance_index]["v_val"] = msg.v_val
 
                     #find last existing index (we are guaranteed that there are no missing indices between the previous index and the 0 index)
-                    last_index = 0
+                    index_to_request = 0
                     if self.instances: 
-                        last_index = list(self.instances)[-1] + 1
-  
-                    #ask proposer for last index
-                    newmsg = self.create_msg_catchup(last_index)
-                    newmsg = pickle.dumps(newmsg)
-                    self.sender.sendto(newmsg, self.config['proposers'])
+                        index_to_request = list(self.instances)[-1] + 1
+
+                    if self.first_run_flag == True: #if this is not done, than we create many new request chains
+                        #ask proposer for last index
+                        newmsg = self.create_msg_catchup(index_to_request)
+                        newmsg = pickle.dumps(newmsg)
+                        self.sender.sendto(newmsg, self.config['proposers'])
+                        self.first_run_flag = False
 
 
 
             if msg.phase == "LEARNER-CATCHUP":
-                print("HERE 6")
                 if msg.learner_id == self.id: #make sure the response if for specific the current learner
-                    print("HERE 7")
                     self.create_instance(msg)
                     self.instances[msg.instance_index]["v_val"] = msg.v_val
                     self.print_message(msg)
@@ -106,24 +99,20 @@ class Learner(Thread):
                     #now we check to see if the next item in the queue follows this past message
                     current_msg_idx = msg.instance_index
                     while self.instances_queue:
-                        idx = list(self.instances)[0]
-                        print("HERE 8")
-                        if current_msg_idx + 1 == idx:
-                            print("HERE 9")
-                            print(self.instances)
-                            print(self.instances_queue)
+                        idx = list(self.instances_queue)[0]
+                        if current_msg_idx + 1 == idx: #if the next message exists in queue
                             #self.instances[idx]["v_val"] = self.instances_queue[idx]["v_val"] #add the msg from queue
                             self.instances[idx] = self.instances_queue[idx]
                             self.instances_queue.pop(idx) #remove msg from queue
                             current_msg_idx = idx #update current_msg_idx to the new one just added to instances
                         else:
-                            print("HERE 10")
-                            print(self.instances)
                             current_msg_idx += 1
                             newmsg = self.create_msg_catchup(current_msg_idx)
                             newmsg = pickle.dumps(newmsg)
                             self.sender.sendto(newmsg, self.config['proposers'])
                             break
+
+                        print(self.instances)
 
 
                 
