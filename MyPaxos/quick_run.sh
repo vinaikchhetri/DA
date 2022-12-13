@@ -33,7 +33,7 @@ conf=../paxos.conf
 KILLCMD="pkill -f $conf"
 
 ./proposer.sh 1 ../paxos.conf &
-#./proposer.sh 2 ../paxos.conf &
+./proposer.sh 2 ../paxos.conf &
 
 ./acceptor.sh 1 ../paxos.conf &
 ./acceptor.sh 2 ../paxos.conf &
@@ -65,13 +65,34 @@ echo "starting clients..."
 2
 3
 4
-11"&
-
-./client.sh 2 ../paxos.conf <<<"5
+5
 6
 7
 8
-15"&
+9
+10
+12
+13
+14
+15
+16
+17
+18
+19
+20"&
+# ./client.sh 1 ../paxos.conf <<<"1
+# 2
+# 3
+# 4
+# 5
+# 6
+# 7
+# 8
+# 9
+# 10"&
+
+# ./client.sh 2 ../paxos.conf <<<"11
+# 22"&
 # ./client.sh 1 ../paxos.conf <<<"1
 # 2
 # 3"&

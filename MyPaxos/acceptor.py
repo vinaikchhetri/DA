@@ -63,6 +63,7 @@ class Acceptor(Thread):
             newmsg.v_rnd = self.instances[msg.instance_index]["v_rnd"]
             newmsg.v_val = self.instances[msg.instance_index]["v_val"]
             newmsg.c_val = msg.client_val #delete
+            newmsg.c_rnd = msg.c_rnd #delete
         return newmsg
 
     def print_message(self, msg):
@@ -79,22 +80,25 @@ class Acceptor(Thread):
         while True:
             msg = self.receiver.recv(2**16)
             msg = pickle.loads(msg)
-            # print(msg)
-            # sys.stdout.flush()
+            print("receive-acceptor",msg)
+            sys.stdout.flush()
             self.create_instance(msg)
 
             if msg.phase == "PHASE1A":
 
                 if msg.c_rnd > self.instances[msg.instance_index]["rnd"]:
-                    print(msg)
+                    print("paased1-a",msg)
                     sys.stdout.flush()
                     self.instances[msg.instance_index]["rnd"] = msg.c_rnd 
                     newmsg = self.create_message(msg)
                     # if newmsg.phase == "PHASE1B":
                     #     print("accep: ",newmsg)
                     #     sys.stdout.flush()
+                    # print("send-acceptor",newmsg)
+                    sys.stdout.flush()
                     newmsg = pickle.dumps(newmsg)
                     self.sender.sendto(newmsg, self.config['proposers'])
+
                 else:
                     print("@@@@@@@@@@@",msg)
                     sys.stdout.flush()
@@ -114,11 +118,13 @@ class Acceptor(Thread):
 
             if msg.phase == "PHASE2A":
                 if msg.c_rnd >= self.instances[msg.instance_index]["rnd"]:
-                    print(msg)
+                    print("passes2-a",msg)
                     sys.stdout.flush()
                     self.instances[msg.instance_index]["v_rnd"] = msg.c_rnd 
                     self.instances[msg.instance_index]["v_val"] = msg.c_val 
                     newmsg = self.create_message(msg)
+                    # print("send-acceptor",newmsg)
+                    sys.stdout.flush()
                     newmsg = pickle.dumps(newmsg)
                     self.sender.sendto(newmsg, self.config['proposers'])
                 else:

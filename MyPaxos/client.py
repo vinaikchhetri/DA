@@ -33,7 +33,7 @@ class Client(Thread):
                 msg = pickle.dumps(msg)
                 print ("client: sending %s to proposers" % (value))
                 self.sender.sendto(msg, self.config['proposers'])
-                time.sleep(0.001)
+                #time.sleep(0.001)
 
         
         
