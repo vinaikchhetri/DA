@@ -16,6 +16,7 @@ class Proposer(Thread):
     def __init__(self, addr, id, config):
         Thread.__init__(self)
         self.instances = {}
+        self.pending = []
         self.instance_index = -1
         self.addr = addr
         self.id = id
@@ -46,7 +47,7 @@ class Proposer(Thread):
         self.instances[self.instance_index] = {"c_rnd":0, "c_val":None, 
         "votes1":{}, "votes2":{},
         "client_val":msg.client_val, "k":0, "k_val":None, 
-        "timert":None, "decided":{}}
+        "timert":None}
 
     def create_message(self, msg):
         newmsg = message()
@@ -78,6 +79,13 @@ class Proposer(Thread):
             newmsg.phase = "PHASE1A"
             newmsg.c_rnd = msg.c_rnd + 100
             newmsg.client_val = msg.client_val
+
+        # elif msg.phase == "PENDING":
+        #     newmsg.instance_index = self.instance_index 
+        #     newmsg.phase = "PHASE1A"
+        #     newmsg.c_rnd = self.id
+        #     # newmsg.client_val = msg.client_val
+        #     newmsg.client_val = self.instances[self.instance_index]["client_val"]
     
         return newmsg
     
@@ -151,7 +159,9 @@ class Proposer(Thread):
             msg = self.receiver.recv(2**16)
             msg = pickle.loads(msg)
 
-            if msg.phase == "CLIENT-REQUEST": 
+            if msg.phase == "CLIENT-REQUEST":
+               
+
                 print(msg)
                 sys.stdout.flush()
 
@@ -170,10 +180,7 @@ class Proposer(Thread):
                 self.instances[self.instance_index]["timert"] = t
                 newmsg = pickle.dumps(newmsg)
                 self.sender.sendto(newmsg, self.config['acceptors'])
-
-
-            
-
+  
 
             if msg.phase == "PHASE1B":
                 # print("Do I receive the message ",msg," prop-id ", self.id)
@@ -213,6 +220,9 @@ class Proposer(Thread):
                                     # time.sleep(0.01*self.id)
                                 else:
                                     self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["k_val"]
+                                    # self.pending.append(self.instances[msg.instance_index]["client_val"])
+                                    
+
                                     newmsg = self.create_message(msg)
                                     # self.instances[msg.instance_index]["timer_stop"]=False
                                     # t = Thread(target=self.timer2, args = (newmsg,))
@@ -221,20 +231,19 @@ class Proposer(Thread):
                                     self.sender.sendto(newmsg, self.config['acceptors'])
                                     # time.sleep(0.01*self.id)
 
-            #                         self.create_instance(msg)
-            #                         msg.phase = "CLIENT-REQUEST"            
-            #                         newmsg = self.create_message(msg)
-            #                         self.instances[self.instance_index]["c_rnd"] = self.id
-            #                         self.instances[self.instance_index]["votes1"][self.id] = 0
-            #                         self.instances[self.instance_index]["votes2"][self.id] = 0
-            #                         self.instances[self.instance_index]["timer_stop"][self.id] = False
-            #                         self.instances[self.instance_index]["timer_stop2"][self.id] = False
-            #                         nt = Thread(target=self.timer, args = (newmsg,))
-            #                         #nt.start()
-            #                         newmsg = pickle.dumps(newmsg)
-            #                         self.sender.sendto(newmsg, self.config['acceptors'])
-            #                         #time.sleep(0.001)
-            #                         time.sleep(0.01*self.id)
+                                    msg.client_val = self.instances[msg.instance_index]["client_val"]
+                                    self.create_instance(msg)
+                                    msg.phase = "CLIENT-REQUEST"            
+                                    newmsg = self.create_message(msg)
+                                    self.instances[self.instance_index]["c_rnd"] = self.id
+                                    self.instances[self.instance_index]["votes1"][self.id] = 0
+                                    self.instances[self.instance_index]["votes2"][self.id] = 0
+                                    
+                                    nt = Timer(1, self.timer, args=(newmsg,))
+                                    nt.start()
+                                    self.instances[self.instance_index]["timert"] = nt
+                                    newmsg = pickle.dumps(newmsg)
+                                    self.sender.sendto(newmsg, self.config['acceptors'])
 
 
 
@@ -262,13 +271,31 @@ class Proposer(Thread):
 
                 
 
-                
+            #   else:
+            #         self.pending.append(msg.client_val)
+            #         val = self.pending[0]
+            #         self.pending.pop(0)
+            #         print("pending ", val)
+            #         sys.stdout.flush()
 
+            #         newmsg = message()
+            #         newmsg.phase = "PENDING"
+            #         newmsg.client_val = val           
+            #         self.create_instance(newmsg) 
+            #         newmsg = self.create_message(newmsg)
 
+            #         self.instances[self.instance_index]["c_rnd"] = self.id
+            #         self.instances[self.instance_index]["votes1"][self.id] = 0
+            #         self.instances[self.instance_index]["votes2"][self.id] = 0
+            #         # self.instances[self.instance_index]["timer_stop"] = False
+                    
 
-        
-
-
-
+            #         # t = Thread(target=self.timer, args = (newmsg,))
+            #         # t.start()
+            #         t = Timer(1, self.timer, args=(newmsg,))
+            #         t.start()
+            #         self.instances[self.instance_index]["timert"] = t
+            #         newmsg = pickle.dumps(newmsg)
+            #         self.sender.sendto(newmsg, self.config['acceptors'])
 
     
