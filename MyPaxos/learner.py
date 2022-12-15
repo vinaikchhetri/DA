@@ -55,16 +55,16 @@ class Learner(Thread):
         if self.deliver:
             for i in range((self.delivered_index + 1), (len(self.instances))):
                 if i in self.instances and self.instances[i]['v_val'] is not None:
-                    print(f"Instance {i}:")
-                    print(self.instances[i]['v_val'], flush=True)          
+                    print(f"Instance {i}: ", self.instances[i]['v_val'])
+                    sys.stdout.flush()
             self.delivered_index = len(self.instances)-1
 
         else:
             msg = message()
             msg.phase = "LEARNER-CATCHUP"
             msg = pickle.dumps(msg)
-            print (f"{self} sends catch up request to proposers")
             self.sender.sendto(msg, self.config['proposers'])
+
 
     def run(self):
         print ('-> learner', self.id)
@@ -84,23 +84,14 @@ class Learner(Thread):
                 self.catch_up()
 
 
-            elif msg.phase == "INSTANCE-CATCHUP":
-                if msg.instance_index > self.instance_index:
-                    if self.instance_index == -1:     
-                        self.instance_index = msg.instance_index
-                        self.catch_up()
-                    else:
-                        self.instance_index = msg.instance_index
 
 
-            elif msg.phase == "LEARNER-CATCHUP":
+            if msg.phase == "LEARNER-CATCHUP":
                 if msg.decisions is not None:
                     if len(msg.decisions) - 1 > self.instance_index:
                         self.instance_index = len(msg.decisions) - 1
                     for instance in msg.decisions:
                         if instance not in self.instances or self.instances[instance]['v_val'] is None:
-                            self.instances[instance] = {'v_val': msg.decisions.instance}
-                self.can_deliver = True
+                            self.instances[instance] = {'v_val': msg.decisions[instance]}
+                self.deliver = True
                 self.catch_up()
-    
-    
