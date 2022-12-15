@@ -86,7 +86,7 @@ class Proposer(Thread):
 
         while(self.instances[msg.instance_index]["timer_stop"]==False):
             if time.time()-begin>3:
-                print("broken:",msg)
+                #print("broken:",msg)
                 sys.stdout.flush()
               
                 if msg.phase == "PHASE1A":
@@ -109,7 +109,7 @@ class Proposer(Thread):
 
         while(self.instances[msg.instance_index]["timer_stop2"]==False):
             if time.time()-begin>3:
-                print("broken2:",msg)
+                #print("broken2:",msg)
                 sys.stdout.flush()
 
 
@@ -140,8 +140,8 @@ class Proposer(Thread):
 
 
             if msg.phase == "CLIENT-REQUEST": 
-                print(msg)
-                sys.stdout.flush()
+                #print(msg)
+                #sys.stdout.flush()
                 self.create_instance(msg)            
                 newmsg = self.create_message(msg)
                 self.instances[self.instance_index]["c_rnd"] = self.id
@@ -162,8 +162,8 @@ class Proposer(Thread):
                         
                     if msg.rnd == crnd:
                         self.instances[msg.instance_index]["votes1"][crnd] += 1
-                        print(msg)
-                        sys.stdout.flush()
+                        #print(msg)
+                        #sys.stdout.flush()
 
                     if self.instances[msg.instance_index]["votes1"][crnd] > int(NUM_ACCEPTORS/2):
                         self.instances[msg.instance_index]["timer_stop"]=True
@@ -185,8 +185,8 @@ class Proposer(Thread):
 
                     if msg.v_rnd == crnd:
                         self.instances[msg.instance_index]["votes2"][crnd]+=1
-                        print(msg)
-                        sys.stdout.flush()
+                        #print(msg)
+                        #sys.stdout.flush()
 
                     if self.instances[msg.instance_index]["votes2"][crnd] > int(NUM_ACCEPTORS/2):
                         self.instances[msg.instance_index]["timer_stop2"]=True
@@ -209,6 +209,5 @@ class Proposer(Thread):
                 newmsg.phase = "LEARNER-CATCHUP"
                 newmsg.decisions = decisions
                 newmsg = pickle.dumps(newmsg)
-                print (f"{self} sends catch up learners to learners")
                 self.sender.sendto(newmsg, self.config['learners'])
 
