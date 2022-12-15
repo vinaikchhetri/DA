@@ -75,8 +75,8 @@ class Acceptor(Thread):
             self.create_instance(msg)
 
             if msg.phase == "PHASE1A":
-                print(msg)
-                sys.stdout.flush()
+                #print(msg)
+                #sys.stdout.flush()
                 if msg.c_rnd > self.instances[msg.instance_index]["rnd"]:
                     self.instances[msg.instance_index]["rnd"] = msg.c_rnd 
                     newmsg = self.create_message(msg)
@@ -85,19 +85,13 @@ class Acceptor(Thread):
 
 
             if msg.phase == "PHASE2A":
-                print(msg)
-                sys.stdout.flush()
+                #print(msg)
+                #sys.stdout.flush()
                 if msg.c_rnd >= self.instances[msg.instance_index]["rnd"]:
                     self.instances[msg.instance_index]["v_rnd"] = msg.c_rnd 
                     self.instances[msg.instance_index]["v_val"] = msg.c_val 
                     newmsg = self.create_message(msg)
                     newmsg = pickle.dumps(newmsg)
                     self.sender.sendto(newmsg, self.config['proposers'])
+                    
 
-            
-            if msg.phase == "INSTANCE-CATCHUP":
-                newmsg = message()
-                newmsg.phase = "INSTANCE-CATCHUP"
-                newmsg.instance_index = msg.instance_index
-                newmsg = pickle.dumps(newmsg)
-                self.sender.sendto(newmsg, self.config['learners'])
