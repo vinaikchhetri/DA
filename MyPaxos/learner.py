@@ -18,6 +18,7 @@ class Learner(Thread):
         self.receiver = self.receive_config()
         self.max_instance_index = -1
         self.last = 0
+        self.len=0
     
     def send_config(self):
         sock = socket.socket(socket.AF_INET,
@@ -39,24 +40,31 @@ class Learner(Thread):
             if self.max_instance_index < msg.instance_index:
                 self.max_instance_index = msg.instance_index
 
+    def print_message_and_call2(self, msg):
+
+        print("LOG "+str(self.id))
+        sys.stdout.flush()
+        print("ii", self.len, "val", msg.v_val)
+        sys.stdout.flush()
+  
+
+
+
+
     def print_message_and_call(self):
-        # print("LOG "+str(self.id)+" :",self.len)
-        # sys.stdout.flush()
-        # print(msg)
-        # # print(msg.v_val)
-        # sys.stdout.flush()
-        flag = 0
+        flag = []
         for i in range(self.last, self.max_instance_index+1):
             if i not in self.instances:
-                flag=1
-                break
-        if flag==1:
+                flag.append(i)
+                
+        if len(flag)>0:
             newmsg = message()
             newmsg.phase = "CATCHUP"
+            newmsg.gap = flag
             newmsg = pickle.dumps(newmsg)
             self.sender.sendto(newmsg, self.config['proposers'])
 
-        if flag==0:
+        if len(flag)==0:
             print("here",self.last)
             sys.stdout.flush()
             for i in range(self.last, self.max_instance_index+1):
@@ -97,6 +105,8 @@ class Learner(Thread):
             if msg.phase == "DECISION" and self.instances[msg.instance_index]["v_val"]==None:
                 self.instances[msg.instance_index]["v_val"] = msg.v_val
                 self.print_message_and_call()
+                self.len+=1
+                #self.print_message_and_call2(msg)
             
             if msg.phase == "CAUGHTUP":
                
@@ -106,13 +116,11 @@ class Learner(Thread):
                         self.instances[i]["v_val"] = msg.decision[i]
                         
 
-                self.print_message()
+                #self.print_message()
+                self.print_message_and_call()
 
 
-            # if msg.phase == "DECISION":
-            #     self.len+=1
-            #     self.instances[msg.instance_index]["v_val"] = msg.v_val
-            #     self.print_message(msg)
+      
 
                 
 

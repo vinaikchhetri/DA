@@ -95,12 +95,12 @@ class Proposer(Thread):
 
     def timer(self, msg):
 
-        print("timer on", msg.instance_index,self.instances[msg.instance_index]['c_rnd'])
-        sys.stdout.flush()
+        # print("timer on", msg.instance_index,self.instances[msg.instance_index]['c_rnd'])
+        # sys.stdout.flush()
 
      
-        print("broken: ", "msg ", msg, "instance ",self.instances[msg.instance_index])
-        sys.stdout.flush()
+        # print("broken: ", "msg ", msg, "instance ",self.instances[msg.instance_index])
+        # sys.stdout.flush()
         #self.instances[msg.instance_index]["timer_stop"][msg.c_rnd] = True
 
         self.instances[msg.instance_index]["c_rnd"] += 100
@@ -132,8 +132,8 @@ class Proposer(Thread):
             if msg.phase == "CLIENT-REQUEST":
                
 
-                print(msg)
-                sys.stdout.flush()
+                # print(msg)
+                # sys.stdout.flush()
 
                 self.create_instance(msg)            
                 newmsg = self.create_message(msg)
@@ -175,8 +175,8 @@ class Proposer(Thread):
                                 #self.instances[msg.instance_index]["timert"].cancel()
                                 # time.sleep(0.1)
                                 #self.instances[msg.instance_index]["votes1"][crnd] = 0
-                                print("msg ", msg)
-                                sys.stdout.flush()
+                                # print("msg ", msg)
+                                # sys.stdout.flush()
 
 
                                 if self.instances[msg.instance_index]["k"]==0:
@@ -233,8 +233,8 @@ class Proposer(Thread):
 
                             if self.instances[msg.instance_index]["votes2"][crnd] > int(NUM_ACCEPTORS/2):
                                 self.instances[msg.instance_index]["timert"].cancel()
-                                print(msg)
-                                sys.stdout.flush()
+                                # print(msg)
+                                # sys.stdout.flush()
                                 self.decision[msg.instance_index] = msg.v_val
                                 newmsg = self.create_message(msg)
                                 newmsg = pickle.dumps(newmsg)
@@ -245,7 +245,10 @@ class Proposer(Thread):
                 if not self.decision =={}:
                     newmsg = message()
                     newmsg.phase = "CAUGHTUP"
-                    newmsg.decision = self.decision
+                    newmsg.decision = {}
+                    for i in self.decision:
+                        if i in msg.gap:
+                            newmsg.decision[i] = self.decision[i]
             
                     # print("whats wrong", newmsg.decision)
                     # sys.stdout.flush()

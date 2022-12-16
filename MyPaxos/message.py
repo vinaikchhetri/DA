@@ -12,3 +12,4 @@ class message:
     v_val: int = None
     client_val: int = None
     decision: Any = None
+    gap: Any = None
