@@ -62,7 +62,7 @@ class Learner():
         if len(flag)>0:
             newmsg = message()
             newmsg.phase = "CATCHUP"
-            newmsg.gap = flag
+            newmsg.gap = flag[0:201]
             newmsg = pickle.dumps(newmsg)
             self.sender.sendto(newmsg, self.config['proposers'])
 
@@ -70,12 +70,12 @@ class Learner():
             #print("here",self.last)
             #sys.stdout.flush()
             for i in range(self.last, self.max_instance_index+1):
-                print("LOG "+str(self.id))
+                #print("LOG "+str(self.id))
+                #sys.stdout.flush()
+                #print("inst", i, "val: ",self.instances[i]["v_val"] )
+                #sys.stdout.flush()
+                print(self.instances[i]["v_val"])
                 sys.stdout.flush()
-                print("inst", i, "val: ",self.instances[i]["v_val"] )
-                sys.stdout.flush()
-                # print(self.instances[i]["v_val"])
-                # sys.stdout.flush()
             self.last = self.max_instance_index+1
 
     def print_message(self):
@@ -108,9 +108,9 @@ class Learner():
 
             if msg.phase == "DECISION" and self.instances[msg.instance_index]["v_val"]==None:
                 self.instances[msg.instance_index]["v_val"] = msg.v_val
-                #self.print_message_and_call()
-                self.len+=1
-                self.print_message_and_call2(msg)
+                self.print_message_and_call()
+                # self.len+=1
+                # self.print_message_and_call2(msg)
             
             if msg.phase == "CAUGHTUP":
                

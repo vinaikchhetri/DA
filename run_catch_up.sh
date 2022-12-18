@@ -41,6 +41,7 @@ sleep 10
 echo "starting client 1..."
 
 ./client.sh 1 $conf < ../prop1 &
+# ./client.sh 2 $conf < ../prop2 &
 
 sleep 1
 echo "starting learners 2..."
@@ -50,7 +51,7 @@ sleep 1
 echo "starting client 2..."
 ./client.sh 2 $conf < ../prop2 &
 
-sleep 5
+sleep 60
 
 $KILLCMD
 wait

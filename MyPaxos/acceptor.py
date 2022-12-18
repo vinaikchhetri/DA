@@ -35,7 +35,7 @@ class Acceptor():
 
     def create_instance(self, msg):
         if not msg.instance_index in self.instances:
-            self.instances[msg.instance_index] = {"rnd":0, "v_val":None, "v_rnd": 0}
+            self.instances[msg.instance_index] = {"rnd":0, "v_val":None, "v_rnd": 0, "msg_id":None}
 
     def create_message(self, msg):
         newmsg = message()
@@ -44,6 +44,7 @@ class Acceptor():
         if msg.phase == "PHASE1A":
             newmsg.instance_index = msg.instance_index 
             newmsg.phase = "PHASE1B"
+            newmsg.msg_id = self.instances[msg.instance_index]["msg_id"]
             newmsg.rnd = self.instances[msg.instance_index]["rnd"]
             newmsg.v_rnd = self.instances[msg.instance_index]["v_rnd"]
             newmsg.v_val = self.instances[msg.instance_index]["v_val"]
@@ -62,6 +63,7 @@ class Acceptor():
             newmsg.phase = "PHASE2B"
             newmsg.v_rnd = self.instances[msg.instance_index]["v_rnd"]
             newmsg.v_val = self.instances[msg.instance_index]["v_val"]
+            newmsg.msg_id = self.instances[msg.instance_index]["msg_id"]
             newmsg.c_val = msg.client_val #delete
             newmsg.c_rnd = msg.c_rnd #delete
         return newmsg
@@ -122,6 +124,8 @@ class Acceptor():
                     # sys.stdout.flush()
                     self.instances[msg.instance_index]["v_rnd"] = msg.c_rnd 
                     self.instances[msg.instance_index]["v_val"] = msg.c_val 
+                    self.instances[msg.instance_index]["msg_id"] = msg.msg_id 
+
                     newmsg = self.create_message(msg)
                     # print("send-acceptor",newmsg)
                     # sys.stdout.flush()

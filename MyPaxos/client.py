@@ -25,13 +25,15 @@ class Client():
     def run(self):
         print ('-> client ', self.id)
         while True:       
-     
+            count = 0
             for value in sys.stdin:
+                count+=1
 
                 value = value.strip()
                 msg = message()
                 msg.phase = "CLIENT-REQUEST"
                 msg.client_val = value
+                msg.msg_id = count
 
                 msg = pickle.dumps(msg)
                 print ("client: sending %s to proposers" % (value))

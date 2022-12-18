@@ -52,7 +52,7 @@ class Proposer():
         self.instances[self.instance_index] = {"c_rnd":0, "c_val":None, 
         "votes1":{}, "votes2":{},
         "client_val":msg.client_val, "k":0, "k_val":None, 
-        "timert":None}
+        "timert":None, "msg_id":None}
 
     def create_message(self, msg):
         newmsg = message()
@@ -61,6 +61,8 @@ class Proposer():
             newmsg.instance_index = self.instance_index 
             newmsg.phase = "PHASE1A"
             newmsg.c_rnd = self.id
+            newmsg.msg_id = msg.msg_id
+            self.instances[self.instance_index]["msg_id"] = msg.msg_id
             # newmsg.client_val = msg.client_val
             newmsg.client_val = self.instances[self.instance_index]["client_val"]
 
@@ -68,6 +70,7 @@ class Proposer():
             newmsg.instance_index = msg.instance_index 
             # self.instances[msg.instance_index]["timer_stop"]=False
             newmsg.phase = "PHASE2A"
+            
             newmsg.c_rnd = self.instances[msg.instance_index]["c_rnd"]
             newmsg.c_val = self.instances[msg.instance_index]["c_val"]
             newmsg.client_val = msg.client_val #delete
@@ -103,7 +106,8 @@ class Proposer():
 
         print ('-> proposer', self.id)
 
-        self.receiver.settimeout(0.0001)
+        # self.receiver.settimeout(0.0001)
+        self.receiver.settimeout(0.001)
         
         while True:
 
@@ -118,8 +122,8 @@ class Proposer():
 
             except:
                 # process message
-                self.pending2 = self.pending[0:501]
-                self.pending = self.pending[501:]
+                self.pending2 = self.pending[0:201]
+                self.pending = self.pending[201:]
                 # self.pending2 = self.pending[0:len(self.pending2)//2]
                 # self.pending = self.pending[len(self.pending2)//2:]
                 # self.pending2 = self.pending
@@ -129,7 +133,7 @@ class Proposer():
                 for msg in self.pending2:
                     # self.pending.remove(msg)
 
-
+                    
                     #msg = self.receiver.recv(2**16)
                     msg = pickle.loads(msg)
                     if msg.phase == "CLIENT-REQUEST": 
@@ -172,7 +176,7 @@ class Proposer():
                                         if self.instances[msg.instance_index]["k"]==0:
                                             self.instances[msg.instance_index]["c_val"] = self.instances[msg.instance_index]["client_val"]
                                             newmsg = self.create_message(msg)
-
+                                            newmsg.msg_id = self.instances[msg.instance_index]["msg_id"]
                                             newmsg = pickle.dumps(newmsg)
                                             self.sender.sendto(newmsg, self.config['acceptors'])
 
@@ -182,16 +186,19 @@ class Proposer():
                                             
 
                                             newmsg = self.create_message(msg)
+                                            newmsg.msg_id = msg.msg_id
                                     
                                             newmsg = pickle.dumps(newmsg)
                                             self.sender.sendto(newmsg, self.config['acceptors'])
                                             
 
-                                            if self.instances[msg.instance_index]["client_val"] in self.new_instance_blocker:
+                                            if self.instances[msg.instance_index]["client_val"] in self.new_instance_blocker and not self.instances[msg.instance_index]["msg_id"] == msg.msg_id:
                                                 msg.client_val = self.instances[msg.instance_index]["client_val"]
                                                 self.create_instance(msg)
                                                 msg.phase = "CLIENT-REQUEST"            
+                                                msg.msg_id = self.instances[msg.instance_index]["msg_id"]
                                                 newmsg = self.create_message(msg)
+                                                
                                                 self.instances[self.instance_index]["c_rnd"] = self.id
                                                 self.instances[self.instance_index]["votes1"][self.id] = 0
                                                 self.instances[self.instance_index]["votes2"][self.id] = 0
@@ -228,6 +235,7 @@ class Proposer():
                                         # sys.stdout.flush()
                                         self.decision[msg.instance_index] = msg.v_val
                                         newmsg = self.create_message(msg)
+                                        newmsg.msg_id = msg.msg_id 
                                         newmsg = pickle.dumps(newmsg)
                                         self.sender.sendto(newmsg, self.config['learners'])
 
@@ -245,6 +253,18 @@ class Proposer():
                             # sys.stdout.flush()
                             newmsg = pickle.dumps(newmsg)
                             self.sender.sendto(newmsg, self.config['learners']) 
+
+                    # if msg.phase == "CATCHUP":
+                    #     if not self.decision =={}:
+
+                    #         for i in self.decision:
+                    #             if i in msg.gap:
+                    #                 newmsg = message()
+                    #                 newmsg.phase = "CAUGHTUP"
+                    #                 newmsg.decision = {}
+                    #                 newmsg.decision[i] = self.decision[i]
+                    #                 newmsg = pickle.dumps(newmsg)
+                    #                 self.sender.sendto(newmsg, self.config['learners']) 
 
                 for ins in (self.instances):
                     curr_instance = self.instances[ins]
