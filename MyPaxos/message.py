@@ -13,3 +13,4 @@ class message:
     client_val: int = None
     decision: Any = None
     gap: Any = None
+    msg_id: int = None

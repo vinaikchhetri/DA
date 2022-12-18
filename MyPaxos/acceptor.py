@@ -8,10 +8,10 @@ import time
 
 from message import message
 
-class Acceptor(Thread):
+class Acceptor():
     
     def __init__(self, addr, id, config):
-        Thread.__init__(self)
+       
         self.instances = {}
         self.addr = addr
         self.id = id
@@ -103,9 +103,9 @@ class Acceptor(Thread):
                 #     print("@@@@@@@@@@@",msg)
                 #     sys.stdout.flush()
 
-                #     print("rejection1",msg.c_rnd)
-                #     print("rejection2",self.instances[msg.instance_index]["rnd"])
-                #     sys.stdout.flush()
+                    # print("rejection1",msg.c_rnd)
+                    # print("rejection2",self.instances[msg.instance_index]["rnd"])
+                    # sys.stdout.flush()
 
                 
             #     else:

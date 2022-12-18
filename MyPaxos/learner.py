@@ -6,10 +6,10 @@ import sys
 
 from message import message
 
-class Learner(Thread):
+class Learner():
     
     def __init__(self, addr, id, config):
-        Thread.__init__(self)
+        
         self.instances = {}
         self.addr = addr
         self.id = id
@@ -42,9 +42,11 @@ class Learner(Thread):
 
     def print_message_and_call2(self, msg):
 
-        print("LOG "+str(self.id))
-        sys.stdout.flush()
-        print("ii", self.len, "val", msg.v_val)
+        #print("LOG "+str(self.id))
+        #sys.stdout.flush()
+        #print("ii", self.len, "val", msg.v_val)
+        #sys.stdout.flush()
+        print(msg.instance_index, msg.v_val)
         sys.stdout.flush()
   
 
@@ -65,13 +67,15 @@ class Learner(Thread):
             self.sender.sendto(newmsg, self.config['proposers'])
 
         if len(flag)==0:
-            print("here",self.last)
-            sys.stdout.flush()
+            #print("here",self.last)
+            #sys.stdout.flush()
             for i in range(self.last, self.max_instance_index+1):
                 print("LOG "+str(self.id))
                 sys.stdout.flush()
                 print("inst", i, "val: ",self.instances[i]["v_val"] )
                 sys.stdout.flush()
+                # print(self.instances[i]["v_val"])
+                # sys.stdout.flush()
             self.last = self.max_instance_index+1
 
     def print_message(self):
@@ -96,7 +100,7 @@ class Learner(Thread):
         print(self.instances[id])
 
     def run(self):
-        print ('-> learner', self.id)
+        #print ('-> learner', self.id)
         while True:
             msg = self.receiver.recv(2**16)
             msg = pickle.loads(msg)
@@ -104,9 +108,9 @@ class Learner(Thread):
 
             if msg.phase == "DECISION" and self.instances[msg.instance_index]["v_val"]==None:
                 self.instances[msg.instance_index]["v_val"] = msg.v_val
-                self.print_message_and_call()
+                #self.print_message_and_call()
                 self.len+=1
-                #self.print_message_and_call2(msg)
+                self.print_message_and_call2(msg)
             
             if msg.phase == "CAUGHTUP":
                

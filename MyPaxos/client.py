@@ -7,10 +7,10 @@ import time
 
 from message import message
 
-class Client(Thread):
+class Client():
     
     def __init__(self, addr, id, config):
-        Thread.__init__(self)
+        
         self.addr = addr
         self.id = id
         self.config = config
@@ -24,15 +24,20 @@ class Client(Thread):
 
     def run(self):
         print ('-> client ', self.id)
-        while True:        
+        while True:       
+     
             for value in sys.stdin:
+
                 value = value.strip()
                 msg = message()
                 msg.phase = "CLIENT-REQUEST"
                 msg.client_val = value
+
                 msg = pickle.dumps(msg)
                 print ("client: sending %s to proposers" % (value))
+                sys.stdout.flush()
                 self.sender.sendto(msg, self.config['proposers'])
+                
                 #time.sleep(0.001)
 
         

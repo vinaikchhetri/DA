@@ -48,7 +48,7 @@ def acceptor(config, id):
     #         # print "acceptor: sending %s to learners" % (msg)
     #         s.sendto(msg, config['learners'])
     a = Acceptor(config['acceptors'], id, config)
-    a.start()
+    a.run()
 
 
 def proposer(config, id):
@@ -62,7 +62,7 @@ def proposer(config, id):
     #         # print "proposer: sending %s to acceptors" % (msg)
     #         s.sendto(msg, config['acceptors'])
     p = Proposer(config['proposers'], id, config)
-    p.start()
+    p.run()
 
 
 
@@ -73,7 +73,7 @@ def learner(config, id):
     #     print(msg)
     #     sys.stdout.flush()
     l = Learner(config['learners'], id, config)
-    l.start()
+    l.run()
 
 
 def client(config, id):
@@ -85,7 +85,7 @@ def client(config, id):
     #     s.sendto(value.encode(), config['proposers'])
     # print ('client done.')
     c = Client(config['clients'], id, config)
-    c.start()
+    c.run()
 
 
 if __name__ == '__main__':
